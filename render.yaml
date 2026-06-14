@@ -1,3 +1,9 @@
+databases:
+  - name: eventease-db
+    plan: free
+    databaseName: eventease
+    user: eventease
+
 services:
   - type: web
     name: eventease-api
@@ -6,10 +12,6 @@ services:
     plan: free
     buildCommand: "./build.sh"
     startCommand: "gunicorn core.wsgi:application"
-    disk:
-      name: sqlite-data
-      mountPath: /opt/render/project/src/backend
-      sizeGB: 1
     envVars:
       - key: DJANGO_DEBUG
         value: "0"
@@ -19,3 +21,7 @@ services:
         value: "3.11.9"
       - key: WEB_CONCURRENCY
         value: "2"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: eventease-db
+          property: connectionString
