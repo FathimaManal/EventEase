@@ -58,6 +58,27 @@ Base URL: `/api`
 
 ## Database
 
+SQLite locally, Postgres in production (auto-provisioned by Render from `render.yaml`).
+
+Setup is two commands (already included in the local run steps above):
+
+```
+python manage.py migrate       # creates the tables
+python manage.py seed_events   # loads 12 sample events
+```
+
+No external database server to install for local dev. The SQLite file lives at `backend/db.sqlite3` and is gitignored.
+
+To view or edit the data visually, create a Django admin user and log in to `/admin/`:
+
+```
+python manage.py createsuperuser
+```
+
+Then visit `http://localhost:8000/admin/`.
+
+**Schema:**
+
 **User**: id, name, email (unique), password (PBKDF2-hashed), created_at
 **Event**: id, title, description, date, location, created_at
 **Registration**: id, user_id, event_id, registered_at
