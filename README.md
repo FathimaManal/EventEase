@@ -44,17 +44,61 @@ Frontend reads the API URL from `frontend/.env`. Default points to `http://local
 
 Base URL: `/api`
 
+Authenticated endpoints expect a JWT in the header:
+
+```
+Authorization: Bearer <access_token>
+```
+
 | Method | Endpoint | Auth | Purpose |
 |---|---|---|---|
-| POST | `/register` | – | Create account, returns user + tokens |
-| POST | `/login` | – | Returns user + tokens |
-| POST | `/logout` | Bearer | Blacklists the refresh token |
-| POST | `/token/refresh/` | – | New access token from a refresh token |
+| POST | `/register` | – | Create account |
+| POST | `/login` | – | Get tokens |
+| POST | `/logout` | Bearer | Blacklist refresh token |
+| POST | `/token/refresh/` | – | Get new access token |
 | GET | `/me` | Bearer | Current user |
-| GET | `/events` | – | List events (supports `?search` and `?page`) |
+| GET | `/events` | – | List events |
 | GET | `/events/:id` | – | Event detail |
-| POST | `/events/:id/register` | Bearer | Register for an event (400 if already registered) |
+| POST | `/events/:id/register` | Bearer | Register for event |
 | GET | `/my-registrations` | Bearer | Current user's registrations |
+
+### Auth
+
+**POST `/register`**
+Request: `{ "name": "Ada", "email": "ada@example.com", "password": "secret123" }`
+Response (201): `{ "user": { "id", "name", "email", "created_at" }, "tokens": { "access", "refresh" } }`
+Errors: `400` if email is taken or password fails validation (min 8 chars, not all numeric, etc.)
+
+**POST `/login`**
+Request: `{ "email": "...", "password": "..." }`
+Response (200): same shape as `/register`
+Errors: `400` invalid credentials
+
+**POST `/logout`** *(auth)*
+Request: `{ "refresh": "<refresh_token>" }`
+Response: `205`, refresh token is added to the blacklist
+
+**POST `/token/refresh/`**
+Request: `{ "refresh": "<refresh_token>" }`
+Response (200): `{ "access": "<new_access_token>" }`
+
+### Events
+
+**GET `/events`** — paginated list, 9 per page
+Query params: `search` (matches title/description/location), `page`, `ordering` (e.g. `date`, `-date`)
+Response (200): `{ "count": 12, "next": "...", "previous": null, "results": [Event...] }`
+
+Each event includes `is_registered` (whether the current user has registered) and `attendee_count`.
+
+**GET `/events/:id`**
+Response (200): a single Event object with the same shape as items in the list above.
+
+**POST `/events/:id/register`** *(auth)*
+Response (201): `{ "id", "event": {...}, "registered_at" }`
+Errors: `400` if the user is already registered
+
+**GET `/my-registrations`** *(auth)*
+Response (200): array of registrations (not paginated), each with the embedded event.
 
 ## Database
 
